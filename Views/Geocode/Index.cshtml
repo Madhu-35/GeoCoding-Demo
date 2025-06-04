@@ -1,0 +1,30 @@
+﻿@model PTVGeocodingDemo.Models.GeocodeRequest
+
+@{
+    ViewData["Title"] = "PTV Geocoding";
+}
+
+<div class="container mt-5">
+    <div class="card shadow p-4">
+        <h2 class="mb-4">🌍 PTV Geocoding API Demo</h2>
+
+        <form asp-action="Index" method="post" class="row g-3">
+            <div class="col-md-10">
+                <label asp-for="Address" class="form-label">Enter Address:</label>
+                <input asp-for="Address" class="form-control" placeholder="e.g., Berlin, Germany" />
+            </div>
+            <div class="col-md-2 align-self-end">
+                <button type="submit" class="btn btn-primary w-100">Get Coordinates</button>
+            </div>
+        </form>
+
+        @if (Model?.Latitude != null)
+        {
+            <div class="alert alert-success mt-4">
+                <h5>📍 Result:</h5>
+                <p><strong>Latitude:</strong> @Model.Latitude</p>
+                <p><strong>Longitude:</strong> @Model.Longitude</p>
+            </div>
+        }
+    </div>
+</div>
