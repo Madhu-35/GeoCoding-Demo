@@ -34,7 +34,37 @@
         border: 1px solid #ccc;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
+    #loadingOverlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+       /*  background: rgba(255, 255, 255, 0.8);
+        background: rgba(0, 0, 0, 0.3); */
+        background: transparent;
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    #loadingOverlay img {
+        width: 500px;
+        height: 500px;
+    }
+
+    #loadingOverlay p {
+        margin-top: 10px;
+        font-weight: 600;
+        color: #555;
+    }
 </style>
+
+<div id="loadingOverlay">
+    <img src="~/images/Spinner@1x-1.0s-200px-200px.gif" alt="Loading..." />
+    <p>Please wait, locating...</p>
+</div>
 
 <div class="container mt-5">
     <div class="card shadow p-4">
@@ -79,3 +109,16 @@
         });
     </script>
 }
+
+        <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+        const overlay = document.getElementById("loadingOverlay");
+
+        if (form && overlay) {
+            form.addEventListener("submit", function () {
+                overlay.style.display = "flex";
+            });
+        }
+    });
+</script>
