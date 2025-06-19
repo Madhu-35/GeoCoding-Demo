@@ -25,6 +25,25 @@
                 <p><strong>Latitude:</strong> @Model.Latitude</p>
                 <p><strong>Longitude:</strong> @Model.Longitude</p>
             </div>
+
+             <div id="map" style="height: 400px;" class="mt-3 rounded border shadow"></div>
         }
     </div>
 </div>
+
+@if (Model?.Latitude != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var map = L.map('map').setView([@Model.Latitude, @Model.Longitude], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([@Model.Latitude, @Model.Longitude]).addTo(map)
+                .bindPopup('📍 @Model.Address')
+                .openPopup();
+        });
+    </script>
+}
