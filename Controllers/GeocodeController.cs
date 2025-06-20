@@ -25,23 +25,59 @@ namespace PTVGeocodingDemo.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(GeocodeRequest model)
         {
-            string requestUrl = $"https://api.myptv.com/geocoding/v1/locations/by-text?searchText={model.Address}";
-
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("apiKey", _apiKey);
-
-            var response = await _httpClient.GetAsync(requestUrl);
-
-            if (response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(model.Address))
             {
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var location = doc.RootElement.GetProperty("locations")[0].GetProperty("referencePosition");
-
-                model.Latitude = location.GetProperty("latitude").ToString();
-                model.Longitude = location.GetProperty("longitude").ToString();
+                ModelState.AddModelError("Address", "Please enter a valid address.");
+                return View(model);
             }
 
+            try
+            {
+                string requestUrl = $"https://api.myptv.com/geocoding/v1/locations/by-text?searchText={model.Address}";
+
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("apiKey", _apiKey);
+
+                var response = await _httpClient.GetAsync(requestUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+
+                    using var doc = JsonDocument.Parse(json);
+                  
+                    var locations = doc.RootElement.GetProperty("locations");
+
+                    if (locations.GetArrayLength() > 0)
+                    {
+                        var location = locations[0].GetProperty("referencePosition");
+                        model.Latitude = location.GetProperty("latitude").ToString();
+                        model.Longitude = location.GetProperty("longitude").ToString();
+                        ModelState.Clear(); // ✅ clears earlier validation errors
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "No location found for the entered address.");
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, $"API Error: {response.StatusCode} - {response.ReasonPhrase}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                ModelState.AddModelError(string.Empty, "An error occurred while contacting the geocoding service: " + ex.Message);
+            }
+            catch (JsonException ex)
+            {
+                ModelState.AddModelError(string.Empty, "An error occurred while processing the geocoding response: " + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred: " + ex.Message);
+                // Optional: log ex for debugging
+            }
             return View(model);
         }
     }
