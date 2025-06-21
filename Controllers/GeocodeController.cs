@@ -9,12 +9,12 @@ namespace PTVGeocodingDemo.Controllers
     public class GeocodeController : Controller
     {
         private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
+        private readonly string? _apiKey;
 
         public GeocodeController(IConfiguration configuration)
         {
             _httpClient = new HttpClient();
-            _apiKey = configuration["PTV:ApiKey"]; // get key from appsettings
+            _apiKey = configuration["PTV:ApiKey"] ?? throw new ArgumentNullException("PTV:ApiKey", "API key must be configured."); // get key from appsettings
         }
 
         public IActionResult Index()
@@ -45,15 +45,25 @@ namespace PTVGeocodingDemo.Controllers
                     var json = await response.Content.ReadAsStringAsync();
 
                     using var doc = JsonDocument.Parse(json);
-                  
+
                     var locations = doc.RootElement.GetProperty("locations");
 
                     if (locations.GetArrayLength() > 0)
                     {
-                        var location = locations[0].GetProperty("referencePosition");
-                        model.Latitude = location.GetProperty("latitude").ToString();
-                        model.Longitude = location.GetProperty("longitude").ToString();
-                        ModelState.Clear(); // ✅ clears earlier validation errors
+                        var location = locations[0];
+                        var position = location.GetProperty("referencePosition");
+                        var address = location.GetProperty("address");
+
+                        model.Latitude = GetSafeProperty(position, "latitude");
+                        model.Longitude = GetSafeProperty(position, "longitude");
+                        model.FormattedAddress = GetSafeProperty(address, "formattedAddress");
+                        model.Street = GetSafeProperty(address, "street");
+                        model.PostalCode = GetSafeProperty(address, "postalCode");
+                        model.City = GetSafeProperty(address, "city");
+                        model.State = GetSafeProperty(address, "state");
+                        model.Country = GetSafeProperty(address, "country");
+
+                        ModelState.Clear(); // clears validation errors
                     }
                     else
                     {
@@ -79,6 +89,22 @@ namespace PTVGeocodingDemo.Controllers
                 // Optional: log ex for debugging
             }
             return View(model);
+        }
+
+        private string? GetSafeProperty(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out var prop))
+            {
+                return prop.ValueKind switch
+                {
+                    JsonValueKind.String => prop.GetString(),
+                    JsonValueKind.Number => prop.GetRawText(),
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
+                    _ => null
+                };
+            }
+            return null;
         }
     }
 }

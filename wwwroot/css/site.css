@@ -21,8 +21,3 @@ body {
     background: linear-gradient(to right, #e0f7fa, #ffffff);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-#map {
-    border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    border-radius: 8px;
-}
